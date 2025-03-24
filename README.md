@@ -88,18 +88,17 @@ Each PDF (e.g. `ledger1.pdf`) will produce a corresponding Excel file (e.g. `led
 
 - **Text Extraction:** Opens a PDF using `pdfplumber` and reads it page-by-page.
 - **Parsing Logic:** Uses regular expressions to identify:
-  - **Account Headers:** Lines like `1-2210 Cash Account` (supports one to three digits before the dash).
+  - **Account Headers:** Lines like `1-4310 Cash Account` (supports one to three digits before the dash).
   - **Beginning Balance:** Lines like `Beginning Balance: $1000.00`.
   - **Transaction Rows:** Lines formatted as, for example:
 
-    `TRX0001AB 01/07/2023 Opening Entry $500.00 $0.00 001 $500.00 $1500.00`.
+    `TD0003SDX 01/07/2023 Opening Entry $500.00 $0.00 $500.00 $1500.00`.
   - **Total Rows:** Lines starting with `Total:` that include **four** amounts.
-- **Header Handling:** Captures header information from the first page (i.e. anything before the table header row:
+- **Header Handling:** Captures header information from the first page (i.e. anything before the table header row):
 
     `ID No., Src, Date, Memo, Debit, Credit, Job No., Net Activity, Ending Balance`
     
     and ignores repeated header details on subsequent pages.
-- **Final Flush:** If an account block doesn’t have a total row by the end of the document, it flushes the account with zero totals.
 
 ### ExcelWriter (utils/excel_writer.py)
 
