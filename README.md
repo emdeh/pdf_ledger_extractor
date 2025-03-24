@@ -37,8 +37,8 @@ This repository contains a Python tool to extract ledger data from PDF files and
 
    Open your terminal and run:
    ```bash
-   git clone https://github.com/emdeh/ledger-parser.git
-   cd ledger-parser
+   git clone https://github.com/emdeh/pdf_ledger_parser.git
+   cd pdf_ledger_parser
    ```
 
 2. **Set Up a Virtual Environment:**
