@@ -7,10 +7,10 @@ regular expressions to parse the text into structured data. The main class,
 transactions and account summaries.
 """
 
-from typing import List, Tuple, Dict
 import re
+from typing import List, Tuple, Dict
 import pdfplumber
-from pprint import pprint
+
 
 class LedgerParser:
     """
