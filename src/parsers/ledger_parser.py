@@ -41,19 +41,20 @@ class LedgerParser:
         # This flag indicates when we've passed the header portion of a page.
         self.header_done = False
 
-        # Pattern for account header, e.g. "1-2210 Cash Account" or "10-2210 Some Desc"
+        # Pattern for account header, e.g. "1-4312 Cash Account" or "10-2210 Some Desc"
         self.account_header_pattern = re.compile(r"^(\d{1,3}-\d{4})\s+(.*)$")
 
         # Pattern for beginning balance (captures amount, optionally with a '$')
         self.beginning_balance_pattern = re.compile(r"Beginning Balance:\s*\$?([\d,.\-]+)")
 
-        # Updated pattern for total line: allows an optional '-' for negative amounts.
+        # Pattern for total line: allows an optional '-' for negative amounts.
         self.total_line_pattern = re.compile(
             r"Total\s*:\s*\$?(-?[\d,]+\.\d{2})(?:cr)?\s+\$?(-?[\d,]+\.\d{2})(?:cr)?\s+\$?(-?[\d,]+\.\d{2})(?:cr)?\s+\$?(-?[\d,]+\.\d{2})(?:cr)?"
         )
 
         # Issue: Does not account for $ signs in the memo field.
         # Issue: Does not account for empty memo field.
+        # Pattern for transaction lines.
         self.transaction_pattern = re.compile(
             r"^(?P<trans_id>.+?)\s+(?P<src>[A-Z]{2})\s+(?P<date>\d{1,2}/\d{1,2}/\d{4})\s+(?P<memo>.+?)(?=\s+\$)\s+\$?(?P<amount1>[\d,.\-]+)(?:\s+\$?(?P<amount2>[\d,.\-]+))?$"
         )
@@ -104,6 +105,7 @@ class LedgerParser:
         - A total row
         """
         # Normalise the line to standard unicode form and remove non printable chars.
+        # Issue may not be required after all, but might not hurt either.
         line = unicodedata.normalize('NFKC', line)
         line = re.sub(r'[\x00-\x1F\x7F-\x9F]', '', line).strip()
 
@@ -126,7 +128,7 @@ class LedgerParser:
                     self.header_lines.append(line)
                 return  # Skip further processing of header lines
 
-        # 3. Process account header line (e.g. "1-2210 Cash Account")
+        # 3. Process account header line (e.g. "1-3214 Cash Account")
         header_match = self.account_header_pattern.match(line)
         if header_match:
             self.current_account_id = header_match.group(1)
@@ -159,7 +161,7 @@ class LedgerParser:
         # 6. Total row: directly match using the updated regex.
         total_match = self.total_line_pattern.search(line)
         if total_match and self.current_account_id is not None:
-            print(f"DEBUG: Processed Total row for account {self.current_account_id}")
+            #print(f"DEBUG: Processed Total row for account {self.current_account_id}")
             self._flush_account(
                 debit=total_match.group(1),
                 credit=total_match.group(2),
@@ -169,6 +171,7 @@ class LedgerParser:
             return
 
     def _flush_account(self, debit, credit, net, ending):
+        # Issue: is this still required?
         """
         Appends a summary entry for the current account, then resets the account context.
         If no ending value is provided, it falls back to the beginning balance.
