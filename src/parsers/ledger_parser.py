@@ -53,7 +53,7 @@ class LedgerParser:
         )
 
         self.transaction_pattern = re.compile(
-            r"^(\S+)\s+([A-Za-z]{2})\s+(\d{1,2}/\d{1,2}/\d{4})\s+(.*?)\s+(\$[\d,\.]+)\s+(\$[\d,\.]+(?:cr)?)$"
+            r"^(?P<trans_id>.+?)\s+(?P<src>[A-Z]{2})\s+(?P<date>\d{1,2}/\d{1,2}/\d{4})\s+(?P<memo>.+?)(?=\s+\$)\s+\$?(?P<amount1>[\d,.\-]+)(?:\s+\$?(?P<amount2>[\d,.\-]+))?$"
         )
 
     def parse(self) -> Tuple[List[Dict], List[Dict]]:
@@ -104,7 +104,7 @@ class LedgerParser:
         # Normalise the line to standard unicode form and remove non printable chars.
         line = unicodedata.normalize('NFKC', line)
         line = re.sub(r'[\x00-\x1F\x7F-\x9F]', '', line).strip()
-        
+
         # 1. Footer lines
         footer_patterns = [
             re.compile(r"^\*\s*Year-End Adjustments\s*$"),
