@@ -1,15 +1,49 @@
 """
 Module to parse a general ledger PDF into transaction and summary data.
+
+This module uses the `pdfplumber` library to extract text from PDF files and 
+regular expressions to parse the text into structured data. The main class, 
+`LedgerParser`, processes the PDF line-by-line to identify and extract 
+transactions and account summaries.
+
+Classes:
+    LedgerParser: Parses a general ledger PDF and returns transactions and 
+    account summaries.
+
+Usage example:
+    parser = LedgerParser("/path/to/ledger.pdf")
+    transactions, summary = parser.parse()
 """
 
 from typing import List, Tuple, Dict
 import re
-from pprint import pprint
 import pdfplumber
 
 class LedgerParser:
     """
     Parses a general ledger PDF and returns transactions and account summaries.
+
+    Attributes:
+            pdf_path (str): Path to the PDF file to be parsed.
+            transactions (List[Dict]): List to store parsed transactions.
+            summary (List[Dict]): List to store account summaries.
+            current_account_id (str): ID of the current account being processed.
+            current_account_desc (str): Description of the current account being processed.
+            current_beginning_balance (str): Beginning balance of the current account.
+            header_lines (List[str]): List to store header lines captured from the first page.
+            account_header_pattern (Pattern): Regex pattern to match account header lines.
+            beginning_balance_pattern (Pattern): Regex pattern to match beginning balance lines.
+            total_line_pattern (Pattern): Regex pattern to match total lines.
+            transaction_pattern (Pattern): Regex pattern to match transaction lines.
+
+        Methods:
+            parse() -> Tuple[List[Dict], List[Dict]]:
+
+            _process_line(line: str):
+                Processes a single line of text to determine its type and
+                updates the transactions and summary lists accordingly.
+
+            _flush_account(zero_totals=False, debit="0.00", credit="0.00", net="0.00", ending=""):
     """
     def __init__(self, pdf_path: str):
         self.pdf_path = pdf_path
@@ -19,7 +53,7 @@ class LedgerParser:
         self.current_account_desc = None
         self.current_beginning_balance = None
 
-        # This will store header lines captured from the first page (to ignore repeats).
+        # Store header lines captured from the first page (to ignore repeats).
         self.header_lines: List[str] = []
 
         # Pattern for account header, e.g. "1-2210 Cash Account"
@@ -34,26 +68,29 @@ class LedgerParser:
             r"Total:\s*\$?([\d,.\-]+)\s+\$?([\d,.\-]+)\s+\$?([\d,.\-]+)\s+\$?([\d,.\-]+)"
         )
 
-        # Updated transaction pattern:
-        # Example: TRX0001AB 01/07/2023 Opening Entry $500.00 $0.00 001 $500.00 $1500.00
-        # Group 1: Transaction ID (TRX followed by 4 digits)
-        # Group 2: Src (2 letters)
-        # Group 3: Date (DD/MM/YYYY)
-        # Group 4: Memo (non-greedy)
-        # Group 5: Debit
-        # Group 6: Credit
-        # Group 7: Job No.
-        # Group 8: Net Activity
-        # Group 9: Ending Balance
+        # Pattern for transaction line, capturing transaction ID, source, date, memo,
+        # debit, credit, job number, net activity, and ending balance
         self.transaction_pattern = re.compile(
             r"^(TRX\d{4})([A-Z]{2})\s+(\d{1,2}/\d{1,2}/\d{4})\s+(.*?)\s+\$?([\d,.\-]+)\s+\$?([\d,.\-]+)\s+(\S+)\s+\$?([\d,.\-]+)\s+\$?([\d,.\-]+)$"
         )
 
     def parse(self) -> Tuple[List[Dict], List[Dict]]:
         """
-        Opens the PDF, processes each page line-by-line, and populates
-        the transactions and summary lists.
+        Parses the PDF file specified by `self.pdf_path` and extracts transactions 
+        and summary information.
+
+        This method opens the PDF file, processes each page line-by-line, and 
+        populates the `transactions` and `summary` lists.
+
+        It handles pages with no extractable text and ensures that any active 
+        account without a total line is recorded with zero totals.
+
+        Returns:
+            Tuple[List[Dict], List[Dict]]: A tuple containing two lists:
+                - transactions: A list of dictionaries, each representing a transaction.
+                - summary: A list of dictionaries, each representing a summary entry.
         """
+
         with pdfplumber.open(self.pdf_path) as pdf:
             for page_number, page in enumerate(pdf.pages, start=1):
                 text = page.extract_text()
@@ -67,7 +104,7 @@ class LedgerParser:
                     self._process_line(line)
 
         # Final flush: if an account is still active without a total line,
-        # we record it with zero totals.
+        # record it with zero totals.
         if self.current_account_id is not None:
             #print(f"DEBUG: Final flush for account {self.current_account_id} - {self.current_account_desc}")
             self._flush_account(zero_totals=True)
@@ -96,10 +133,18 @@ class LedgerParser:
         for pattern in footer_patterns:
             if pattern.match(line):
                 #print(f"DEBUG: Skipping footer line: '{line}'")
-                return  # Just ignore the footer line, do not flush anything
+                return  # Ignore the footer line, do not flush anything
 
         # 2. Filter out repeated header details
-        header_tokens = ["Created:", "General Ledger", "Test Company", "Test Street", "ABN:", "Email:", "To "]
+        header_tokens = [
+            "Created:",
+            "General Ledger",
+            "Test Company",
+            "Test Street",
+            "ABN:",
+            "Email:",
+            "To "
+            ]
         if any(token in line for token in header_tokens):
             if line in self.header_lines:
                 #print(f"DEBUG: Skipping repeated header: '{line}'")
@@ -111,7 +156,7 @@ class LedgerParser:
         # 3. Account header line (e.g. "1-2210 Cash Account")
         header_match = self.account_header_pattern.match(line)
         if header_match:
-            # If we were already in an account, flush it with zero totals if no "Total:" was encountered
+            # If already in an account, flush it with zero totals if no "Total:" was found.
             if self.current_account_id is not None:
                 #print(f"DEBUG: Flushing account {self.current_account_id} before new account header.")
                 self._flush_account(zero_totals=True)

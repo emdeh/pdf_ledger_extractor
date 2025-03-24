@@ -1,5 +1,24 @@
 """
-Module docstring
+Main entry point.
+Provides functionality to process multiple PDF files in a specified directory,
+extract transaction data using a ledger parser, and write the results to Excel files.
+
+Classes:
+    LedgerParser: A class to parse ledger information from PDF files.
+    ExcelWriter: A class to write parsed data to Excel files.
+
+Functions:
+    main(): Main entry point for processing multiple PDFs in a directory. It takes an input
+            directory containing PDF files and an optional output directory to save the
+            resulting Excel files. If the output directory is not specified, it defaults
+            to "output". The function processes each PDF file, extracts transaction data,
+            and writes the results to an Excel file.
+
+Usage:
+    python main.py <input_directory> [output_directory]
+
+Example:
+    python main.py /path/to/pdf_directory /path/to/output_directory
 """
 
 import os

@@ -1,8 +1,16 @@
+"""
+Generates a test ledger PDF in A4 portrait mode with multiple account blocks.
+The PDF includes accounts with a varying number of randomly generated transactions.
+A dynamic footer is added on the left with the correct total page count.
+
+This script was developed by ChatGPT based on a written description of the actual target data.
+"""
+
 import os
+from datetime import datetime
 import random
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
-from datetime import datetime
 
 # Constants for page layout
 PAGE_WIDTH, PAGE_HEIGHT = A4
