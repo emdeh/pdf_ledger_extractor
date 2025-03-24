@@ -4,8 +4,8 @@ Module to parse a general ledger PDF into transaction and summary data.
 
 from typing import List, Tuple, Dict
 import re
-import pdfplumber
 from pprint import pprint
+import pdfplumber
 
 class LedgerParser:
     """
@@ -58,23 +58,23 @@ class LedgerParser:
             for page_number, page in enumerate(pdf.pages, start=1):
                 text = page.extract_text()
                 if not text:
-                    print(f"DEBUG: Page {page_number} has no extractable text.")
+                    #print(f"DEBUG: Page {page_number} has no extractable text.")
                     continue
 
                 lines = text.split("\n")
-                print(f"DEBUG: Processing Page {page_number}, {len(lines)} lines.")
+                #print(f"DEBUG: Processing Page {page_number}, {len(lines)} lines.")
                 for line in lines:
                     self._process_line(line)
 
         # Final flush: if an account is still active without a total line,
         # we record it with zero totals.
         if self.current_account_id is not None:
-            print(f"DEBUG: Final flush for account {self.current_account_id} - {self.current_account_desc}")
+            #print(f"DEBUG: Final flush for account {self.current_account_id} - {self.current_account_desc}")
             self._flush_account(zero_totals=True)
 
         # Debugging: Print the summary table before returning
-        print("DEBUG: Final Summary Table:")
-        pprint(self.summary)
+        #print("DEBUG: Final Summary Table:")
+        #pprint(self.summary)
 
         return self.transactions, self.summary
 
@@ -95,16 +95,16 @@ class LedgerParser:
         ]
         for pattern in footer_patterns:
             if pattern.match(line):
-                print(f"DEBUG: Skipping footer line: '{line}'")
+                #print(f"DEBUG: Skipping footer line: '{line}'")
                 return  # Just ignore the footer line, do not flush anything
 
         # 2. Filter out repeated header details
         header_tokens = ["Created:", "General Ledger", "Test Company", "Test Street", "ABN:", "Email:", "To "]
         if any(token in line for token in header_tokens):
             if line in self.header_lines:
-                print(f"DEBUG: Skipping repeated header: '{line}'")
+                #print(f"DEBUG: Skipping repeated header: '{line}'")
                 return
-            print(f"DEBUG: Capturing header line: '{line}'")
+            #print(f"DEBUG: Capturing header line: '{line}'")
             self.header_lines.append(line)
             return
 
@@ -113,19 +113,19 @@ class LedgerParser:
         if header_match:
             # If we were already in an account, flush it with zero totals if no "Total:" was encountered
             if self.current_account_id is not None:
-                print(f"DEBUG: Flushing account {self.current_account_id} before new account header.")
+                #print(f"DEBUG: Flushing account {self.current_account_id} before new account header.")
                 self._flush_account(zero_totals=True)
 
             self.current_account_id = header_match.group(1)
             self.current_account_desc = header_match.group(2)
-            print(f"DEBUG: New account header: {self.current_account_id} - {self.current_account_desc}")
+            #print(f"DEBUG: New account header: {self.current_account_id} - {self.current_account_desc}")
             return
 
         # 4. Beginning Balance line
         bb_match = self.beginning_balance_pattern.search(line)
         if bb_match:
             self.current_beginning_balance = bb_match.group(1)
-            print(f"DEBUG: Set beginning balance for account {self.current_account_id}: {self.current_beginning_balance}")
+            #print(f"DEBUG: Set beginning balance for account {self.current_account_id}: {self.current_beginning_balance}")
             return
 
         # 5. Transaction row
@@ -145,14 +145,14 @@ class LedgerParser:
                 "ending_balance": txn_match.group(9)
             }
             self.transactions.append(txn)
-            print(f"DEBUG: Added transaction {txn_match.group(1)} for account {self.current_account_id}")
+            #print(f"DEBUG: Added transaction {txn_match.group(1)} for account {self.current_account_id}")
             return
 
         # 6. Total row
         if "Total:" in line:
             total_match = self.total_line_pattern.search(line)
             if total_match and self.current_account_id is not None:
-                print(f"DEBUG: Processed Total row for account {self.current_account_id}")
+                #print(f"DEBUG: Processed Total row for account {self.current_account_id}")
                 self._flush_account(
                     zero_totals=False,
                     debit=total_match.group(1),
