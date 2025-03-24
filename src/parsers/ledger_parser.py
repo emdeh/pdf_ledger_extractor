@@ -23,7 +23,7 @@ class LedgerParser:
         summary (List[Dict]): List to store account summaries.
         current_account_id (str): ID of the current account being processed.
         current_account_desc (str): Description of the current account being processed.
-        current_beginning_balance (str): Beginning balance of the current account.
+        current_beginning_balance (str): Beginning balance of the current account..
         header_lines (List[str]): List to store header lines captured from the first page.
         header_done (bool): Flag set to True once the table header row ("ID No ...") is encountered on a page.
     """
