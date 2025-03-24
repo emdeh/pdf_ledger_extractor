@@ -52,6 +52,8 @@ class LedgerParser:
             r"Total\s*:\s*\$?(-?[\d,]+\.\d{2})(?:cr)?\s+\$?(-?[\d,]+\.\d{2})(?:cr)?\s+\$?(-?[\d,]+\.\d{2})(?:cr)?\s+\$?(-?[\d,]+\.\d{2})(?:cr)?"
         )
 
+        # Issue: Does not account for $ signs in the memo field.
+        # Issue: Does not account for empty memo field.
         self.transaction_pattern = re.compile(
             r"^(?P<trans_id>.+?)\s+(?P<src>[A-Z]{2})\s+(?P<date>\d{1,2}/\d{1,2}/\d{4})\s+(?P<memo>.+?)(?=\s+\$)\s+\$?(?P<amount1>[\d,.\-]+)(?:\s+\$?(?P<amount2>[\d,.\-]+))?$"
         )
@@ -67,7 +69,7 @@ class LedgerParser:
                 - summary: A list of dictionaries, each representing a summary entry.
         """
         with pdfplumber.open(self.pdf_path) as pdf:
-            for page_number, page in enumerate(pdf.pages, start=1):
+            for page in enumerate(pdf.pages, start=1):
                 # Reset header_done at the start of each page.
                 self.header_done = False
 
@@ -138,6 +140,7 @@ class LedgerParser:
             return
 
         # 5. Transaction row
+        # Issue: does not map debits/credits to individual columns
         txn_match = self.transaction_pattern.match(line)
         if txn_match and self.current_account_id is not None:
             txn = {
