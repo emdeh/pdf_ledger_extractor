@@ -21,6 +21,8 @@ class ExcelWriter:
         df_transactions = pd.DataFrame(self.transactions)
         df_summary = pd.DataFrame(self.summary)
 
+        print(df_summary)
+
         with pd.ExcelWriter(self.output_path, engine='openpyxl') as writer:
             df_transactions.to_excel(writer, sheet_name="Details", index=False)
             df_summary.to_excel(writer, sheet_name="Summary", index=False)

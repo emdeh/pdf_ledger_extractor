@@ -1,3 +1,5 @@
+#### DOES NOT INCLUDE PAGE NUMBERS WHICH IS USED BY THE PARSER LOGIC - USE THE MULTIPAGE VERSION ####
+
 import os
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
